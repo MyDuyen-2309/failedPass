@@ -14,12 +14,12 @@ public class CalculatorTest {
 
     @Test
     public void testSubtraction() {
-        Assert.assertEquals(calculator.subtract(5, 3), 3); // Test case pass
+        Assert.assertEquals(calculator.subtract(5, 3), 2); // Test case pass
     }
 
     @Test
     public void testAdditionFail() {
-        Assert.assertEquals(calculator.add(2, 2), 5); // Test case fail
+        Assert.assertEquals(calculator.add(2, 2), 4); // Test case fail
     }
 
 }
