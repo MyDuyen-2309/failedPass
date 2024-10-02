@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Clear Maven Cache
+        run: |
+          rm -rf ~/.m2/repository/org/aspectj/aspectjweaver/1.9.22.1
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Allure Results
+        uses: actions/cache@v2
+        with:
+          path: target/allure-results
+          key: allure-results-${{ github.sha }}
+          restore-keys: |
+            allure-results-
+
+      - name: Build with Maven
+        run: |
+          echo "Starting Maven build..."
+          mvn clean test -e  # Thêm thông số -e để có thông tin chi tiết
+          echo "Maven build completed."
+
+      - name: Install Allure
+        run: |
+          echo "Installing Allure..."
+          wget $(curl -s https://api.github.com/repos/allure-framework/allure2/releases/latest | grep "browser_download_url" | grep "allure-.*zip" | cut -d '"' -f 4) -O allure.zip
+          unzip allure.zip -d allure
+          sudo ln -s $GITHUB_WORKSPACE/allure/allure-*/*/bin/allure /usr/local/bin/allure
+          echo "Allure installation completed."
+
+      - name: Generate Allure report
+        run: |
+          echo "Generating Allure report..."
+          mvn allure:report
+          echo "Allure report generated."
+          echo "Checking allure results directory:"
+          if [ -d target/allure-results ]; then
+            echo "Allure results directory exists."
+            ls target/allure-results
+          else
+            echo "Allure results directory does not exist."
+            exit 1
+          fi
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-results
+          path: target/allure-results/**
+
+      - name: Upload Allure History
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-history
+          path: target/allure-results/history
+      - name: Check Allure Results
+        run: |
+          echo "Checking allure results directory:"
+          if [ -d target/allure-results ]; then
+            echo "Allure results directory exists."
+            ls target/allure-results
+          else
+            echo "Allure results directory does not exist."
+          fi
